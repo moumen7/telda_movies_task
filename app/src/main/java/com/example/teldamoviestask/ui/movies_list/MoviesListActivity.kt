@@ -1,5 +1,6 @@
 package com.example.teldamoviestask.ui.movies_list
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
@@ -7,14 +8,17 @@ import android.text.TextWatcher
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.app.ActivityOptionsCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.teldamoviestask.R
+import com.example.teldamoviestask.data.constants.Constants
 import com.example.teldamoviestask.databinding.ActivityMainBinding
 import com.example.teldamoviestask.model.Movie
 import com.example.teldamoviestask.model.Resource
+import com.example.teldamoviestask.ui.single_movie.SingleMovieActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -61,9 +65,24 @@ class MoviesListActivity : AppCompatActivity() {
         binding.moviesList.layoutManager = LinearLayoutManager(this)
         binding.moviesList.adapter =
             viewModel.favorites.value?.let {
-                MoviesListAdapter(movies, it) { movieId, isCurrentlyFavorite ->
+                MoviesListAdapter(movies, it, { movieId, isCurrentlyFavorite ->
                     viewModel.toggleFavorite(movieId, isCurrentlyFavorite)
-                }
+                }, { movieId, imageView, isFavorite ->
+                    // Handle item click
+
+
+                    val intent = Intent(this, SingleMovieActivity::class.java).apply {
+                        putExtra("id", movieId)
+                        putExtra("isFavorite", isFavorite)
+                    }
+
+                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                        this,
+                        imageView,
+                        Constants.transition_name
+                    )
+                    startActivity(intent, options.toBundle())
+                })
 
             }
     }
@@ -74,6 +93,7 @@ class MoviesListActivity : AppCompatActivity() {
             viewModel.fetchPopularMovies()
         }
     }
+
     private fun initViews() {
         binding.searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -83,6 +103,7 @@ class MoviesListActivity : AppCompatActivity() {
                     viewModel.getMoviesbySearchTerm(s.toString())
                 }
             }
+
             override fun afterTextChanged(s: Editable?) {}
         })
     }

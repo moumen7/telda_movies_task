@@ -12,10 +12,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -26,7 +24,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit = Retrofit.Builder()
-        .baseUrl(Constants.base_url)
+        .baseUrl(Constants.BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
@@ -41,11 +39,10 @@ object AppModule {
     fun provideSearchApi(retrofit: Retrofit): SearchApi = retrofit.create(
         SearchApi::class.java)
 
-
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, Constants.database_name).build()
+        Room.databaseBuilder(context, AppDatabase::class.java, Constants.DATABASE_NAME).build()
 
     @Provides
     fun provideFavoriteItemDao(appDatabase: AppDatabase): FavoriteItemDao =

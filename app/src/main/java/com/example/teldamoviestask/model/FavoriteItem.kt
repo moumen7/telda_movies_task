@@ -4,5 +4,5 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.teldamoviestask.data.constants.Constants
 
-@Entity(tableName = Constants.table_name)
+@Entity(tableName = Constants.TABLE_NAME)
 data class FavoriteItem(@PrimaryKey val itemId: Int?)

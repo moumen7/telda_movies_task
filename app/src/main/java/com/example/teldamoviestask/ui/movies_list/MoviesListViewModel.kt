@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.teldamoviestask.data.local.FavoritesRepository
 import com.example.teldamoviestask.data.remote.MoviesRepository
-import com.example.teldamoviestask.model.FavoriteItem
 import com.example.teldamoviestask.model.Movie
 import com.example.teldamoviestask.model.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,11 +30,8 @@ class MoviesListViewModel @Inject constructor(
 
     fun fetchFavorites() {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-
-                _favorites.postValue(favoritesRepository.getFavorites().mapNotNull { it.itemId }
-                    .toMutableSet())
-            }
+            _favorites.postValue(favoritesRepository.getAllFavorites().mapNotNull { it.itemId }
+                .toMutableSet())
         }
     }
 
@@ -78,7 +74,7 @@ class MoviesListViewModel @Inject constructor(
             } else if (result is Resource.Error) {
                 _searchResultsMovies.value = Resource.Error(result.message ?: "Unknown Error")
             }
-            if(searchTerm.length>0)
+            if (searchTerm.length > 0)
                 _movies.value = _searchResultsMovies.value
             else
                 _movies.value = _mostPopularMovies.value
