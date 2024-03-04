@@ -27,13 +27,16 @@ Telda Movies is a challenge made for Telda. It shows list of popular movies, mov
 
 ## Topics used for implementation
 
-- Androidx.
-- MVVM.
-- Retrofit.
-- Firebase Firestore.
-- Firebase Auth.
-- Material Design.
-- Pagination.
-- Navigation component.
-- Asynchronous Programming.
+- MVVM
+- Retrofit
+- Room
+- Coroutines
+- Material Design
+- Live Data
+- State Flow
+- Hilt
+- Data Binding
+- View Binding
+- Junit
+- Lottie Files
 
