@@ -15,7 +15,7 @@ Telda Movies is a challenge made for Telda. It shows list of popular movies, mov
  <img src="https://github.com/moumen7/voice_clone/assets/57041674/d66cc0fb-8fbc-4866-a555-3e265934e109" width="290" height="640">
 </p>
 
----
+
 
 
 <p align="middle">
