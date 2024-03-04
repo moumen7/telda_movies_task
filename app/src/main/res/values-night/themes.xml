@@ -2,7 +2,7 @@
     <!-- Base application theme. -->
     <style name="Theme.TeldaMoviesTask" parent="Theme.Material3.Dark.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_200</item>
+        <item name="colorPrimary">@color/light_grey</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
         <item name="colorOnPrimary">@color/black</item>
         <!-- Secondary brand color. -->
@@ -12,5 +12,15 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/black</item>
         <!-- Customize your theme here. -->
+    </style>
+    <style name="CustomOutlineBoxStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">20dp</item>
+        <item name="boxCornerRadiusTopEnd">20dp</item>
+        <item name="boxCornerRadiusBottomStart">20dp</item>
+        <item name="boxCornerRadiusBottomEnd">20dp</item>
+        <item name="boxStrokeColor">@color/outline_color</item> <!-- Adjust your outline color here -->
+        <item name="hintTextColor">@color/dark_grey</item> <!-- Adjust your hint text color here -->
+        <!-- Optional: Define a color for the focused state if needed -->
+        <item name="colorPrimary">@color/dark_grey</item> <!-- This line removes focus color change by setting it to outline color -->
     </style>
 </resources>
