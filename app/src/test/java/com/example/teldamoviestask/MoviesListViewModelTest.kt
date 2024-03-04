@@ -65,7 +65,7 @@ class MoviesListViewModelTest {
         runTest {
             whenever(moviesRepository.getPopularMovies()).thenReturn(Resource.Success(popularMoviesMockResponse))
 
-            viewModel.fetchPopularMovies()
+            viewModel.getPopularMovies()
             advanceUntilIdle()
 
             assertTrue(viewModel.movies.value is Resource.Success)

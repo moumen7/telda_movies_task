@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.teldamoviestask.data.local.FavoritesRepository
 import com.example.teldamoviestask.data.remote.MoviesRepository
 import com.example.teldamoviestask.model.*
-import com.example.teldamoviestask.utils.NumberUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,11 +25,9 @@ class SingleMovieViewModel @Inject constructor(
     private val _movie = MutableLiveData<Resource<MovieDetails>>(Resource.Loading())
     val movie: LiveData<Resource<MovieDetails>> = _movie
 
-    private val _similarMovies = MutableStateFlow<Resource<MovieResponse>>(Resource.Loading())
-    val similarMovies: StateFlow<Resource<MovieResponse>> = _similarMovies.asStateFlow()
+    private val _similarMovies = MutableStateFlow<Resource<List<Movie>>>(Resource.Loading())
+    val similarMovies: StateFlow<Resource<List<Movie>>> = _similarMovies.asStateFlow()
 
-
-    private val _castDetails = MutableStateFlow<Resource<CreditsResponse>>(Resource.Loading())
 
     private val _actors = MutableStateFlow<Resource<List<CastMember>>>(Resource.Loading())
     val actors = _actors.asStateFlow()
@@ -39,7 +36,7 @@ class SingleMovieViewModel @Inject constructor(
     private val _directors = MutableStateFlow<Resource<List<CrewMember>>>(Resource.Loading())
     val directors = _directors.asStateFlow()
 
-    private val _isFavorite = MutableStateFlow<Boolean>(false)
+    private val _isFavorite = MutableStateFlow(false)
     val isFavorite = _isFavorite.asStateFlow()
 
 
@@ -48,39 +45,36 @@ class SingleMovieViewModel @Inject constructor(
         _isFavorite.value = !isFavorite.value
     }
 
-    fun fetchMovieDetails(movieId: Int) {
+    fun getMovieDetails(movieId: Int) {
         viewModelScope.launch {
             _movie.value = Resource.Loading()
             val result = moviesRepository.getMovieDetails(movieId)
-            if (result is Resource.Success) {
-                _movie.value = Resource.Success(result.data!!)
-            } else if (result is Resource.Error) {
-                _movie.value = Resource.Error(result.message ?: "Unknown Error")
-            }
+            _movie.value = result
         }
     }
 
-    fun fetchSimilarMovies(movieId: Int) {
+    fun getSimilarMovies(movieId: Int) {
         viewModelScope.launch {
             _similarMovies.value = Resource.Loading()
             val result = moviesRepository.getSimilarMovies(movieId)
             if (result is Resource.Success) {
-                _similarMovies.value = Resource.Success(result.data!!)
-                val credits =
-                    result.data.results.map { movie ->
-                        async { movie.id?.let { moviesRepository.getCasts(it).data } }
-                    }.awaitAll()
+                if(result.data!=null) {
+                    _similarMovies.value = Resource.Success(result.data.results.take(5))
+                    val credits =
+                        result.data.results.map { movie ->
+                            async { movie.id?.let { moviesRepository.getCasts(it).data } }
+                        }.awaitAll()
 
-                _actors.value = Resource.Success(credits.flatMap { it?.cast ?: listOf() }
-                    .filter { it.known_for_department  == Constants.ACTOR}
-                    .sortedByDescending { it.popularity }
-                    .take(5))
+                    _actors.value = Resource.Success(credits.flatMap { it?.cast ?: listOf() }
+                        .filter { it.known_for_department == Constants.ACTOR }
+                        .sortedByDescending { it.popularity }
+                        .take(5))
 
-                _directors.value = Resource.Success(credits.flatMap { it?.crew ?: listOf() }
-                    .filter { it.department == Constants.DIRECTOR }
-                    .sortedByDescending { it.popularity }
-                    .take(5))
-
+                    _directors.value = Resource.Success(credits.flatMap { it?.crew ?: listOf() }
+                        .filter { it.department == Constants.DIRECTOR }
+                        .sortedByDescending { it.popularity }
+                        .take(5))
+                }
             } else if (result is Resource.Error) {
                 _similarMovies.value = Resource.Error(result.message ?: "Unknown Error")
             }

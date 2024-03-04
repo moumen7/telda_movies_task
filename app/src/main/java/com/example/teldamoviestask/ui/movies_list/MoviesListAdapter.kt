@@ -15,7 +15,7 @@ class MoviesListAdapter(
     private val movies: List<Movie>,
     private var favorites: Set<Int>,
     private val onFavoriteToggle: (Int, Boolean) -> Unit,
-    private val onItemClick: (Int,ImageView, Boolean) -> Unit
+    private val onItemClick: (Int, Boolean) -> Unit
 ) : RecyclerView.Adapter<MoviesListAdapter.MovieViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MovieViewHolder {
@@ -46,7 +46,7 @@ class MoviesListAdapter(
             movie: Movie,
             isFavorite: Boolean,
             onFavoriteToggle: (Int, Boolean) -> Unit,
-            onItemClick: (Int, ImageView, Boolean) -> Unit
+            onItemClick: (Int, Boolean) -> Unit
         ) {
             binding.addToFavorites.setImageResource(if (isFavorite) R.drawable.heart_on else R.drawable.heart_off)
             binding.addToFavorites.setOnClickListener {
@@ -54,13 +54,13 @@ class MoviesListAdapter(
             }
 
             binding.root.setOnClickListener {
-                movie.id?.let { it1 -> onItemClick(it1, binding.movieImage, isFavorite) }
+                movie.id?.let { it1 -> onItemClick(it1, isFavorite) }
             }
-
+            val completeImageUrl = Constants.BASE_IMAGE_URL + movie.backdrop_path
             binding.movie = movie
             // Use Glide to load the movie image from URL
             Glide.with(binding.movieImage.context)
-                .load(Constants.BASE_IMAGE_URL + movie.backdrop_path)
+                .load(completeImageUrl)
                 .into(binding.movieImage)
 
             binding.executePendingBindings()

@@ -1,6 +1,5 @@
 package com.example.teldamoviestask.ui.movies_list
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,9 +8,10 @@ import com.example.teldamoviestask.data.remote.MoviesRepository
 import com.example.teldamoviestask.model.Movie
 import com.example.teldamoviestask.model.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,22 +20,24 @@ class MoviesListViewModel @Inject constructor(
     private val favoritesRepository: FavoritesRepository
 ) : ViewModel() {
 
-    private val _movies = MutableLiveData<Resource<List<Movie>>>(Resource.Loading())
-    val movies: LiveData<Resource<List<Movie>>> = _movies
-    private val _mostPopularMovies = MutableLiveData<Resource<List<Movie>>>(Resource.Loading())
-    private val _searchResultsMovies = MutableLiveData<Resource<List<Movie>>>(Resource.Loading())
+    private val _movies = MutableStateFlow<Resource<List<Movie>>>(Resource.Loading())
+    val movies: StateFlow<Resource<List<Movie>>> = _movies.asStateFlow()
+
+    private val _mostPopularMovies = MutableStateFlow<Resource<List<Movie>>>(Resource.Loading())
+    private val _searchResultsMovies = MutableStateFlow<Resource<List<Movie>>>(Resource.Loading())
 
     private val _favorites = MutableLiveData<MutableSet<Int>>()
     val favorites = _favorites
 
-    fun fetchFavorites() {
+    fun getFavorites() {
         viewModelScope.launch {
-            _favorites.postValue(favoritesRepository.getAllFavorites().mapNotNull { it.itemId }
-                .toMutableSet())
+            val favoritesResult = favoritesRepository.getAllFavorites().mapNotNull { it.itemId }
+                .toMutableSet()
+            _favorites.postValue(favoritesResult)
         }
     }
 
-    fun fetchPopularMovies() {
+    fun getPopularMovies() {
         viewModelScope.launch {
             _mostPopularMovies.value = Resource.Loading()
             val result = moviesRepository.getPopularMovies()
@@ -51,12 +53,12 @@ class MoviesListViewModel @Inject constructor(
     fun toggleFavorite(movieId: Int, isFavorite: Boolean) = viewModelScope.launch {
         favoritesRepository.toggleFavorite(movieId, isFavorite)
         if (isFavorite) {
-            // Create a new set with the additional favorite
+            // Create a new set with the removed favorite
             val updatedFavorites = _favorites.value?.toMutableSet() ?: mutableSetOf()
             updatedFavorites.remove(movieId)
             _favorites.value = updatedFavorites
         } else {
-            // Create a new set without the removed favorite
+            // Create a new set without the additional favorite
             val updatedFavorites = _favorites.value?.toMutableSet() ?: mutableSetOf()
             updatedFavorites.add(movieId)
             _favorites.value = updatedFavorites
@@ -74,7 +76,7 @@ class MoviesListViewModel @Inject constructor(
             } else if (result is Resource.Error) {
                 _searchResultsMovies.value = Resource.Error(result.message ?: "Unknown Error")
             }
-            if (searchTerm.length > 0)
+            if (searchTerm.isNotEmpty())
                 _movies.value = _searchResultsMovies.value
             else
                 _movies.value = _mostPopularMovies.value

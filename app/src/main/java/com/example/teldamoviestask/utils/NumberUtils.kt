@@ -1,6 +1,5 @@
 package com.example.teldamoviestask.utils
 
-import androidx.databinding.BindingAdapter
 import java.text.NumberFormat
 import java.util.Locale
 

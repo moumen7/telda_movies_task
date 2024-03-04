@@ -1,64 +1,75 @@
 package com.example.teldamoviestask.ui.movies_list
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.core.app.ActivityOptionsCompat
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.teldamoviestask.R
 import com.example.teldamoviestask.data.constants.Constants
-import com.example.teldamoviestask.databinding.ActivityMainBinding
+import com.example.teldamoviestask.databinding.ActivityMoviesListBinding
 import com.example.teldamoviestask.model.Movie
 import com.example.teldamoviestask.model.Resource
 import com.example.teldamoviestask.ui.single_movie.SingleMovieActivity
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MoviesListActivity : AppCompatActivity() {
     private val viewModel: MoviesListViewModel by viewModels()
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityMoviesListBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(R.layout.activity_movies_list)
+        binding = ActivityMoviesListBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        getData()
-        initViews()
+        initEditText()
         initObservors()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        getData()
     }
 
     private fun initObservors() {
         viewModel.favorites.observe(this, Observer { favoriteEntities ->
             (binding.moviesList.adapter as? MoviesListAdapter)?.updateFavorites(favoriteEntities)
         })
-        viewModel.movies.observe(this, Observer { resource ->
-            when (resource) {
-                is Resource.Success -> {
-                    // Update UI with the data
-                    resource.data?.let { movies ->
-                        initRecyclerView(movies)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.movies.collectLatest { resource ->
+                    when (resource) {
+                        is Resource.Success -> {
+                            binding.moviesListLoading.visibility = View.GONE
+                            resource.data?.let { movies ->
+                                initRecyclerView(movies)
+                            }
+                        }
+                        is Resource.Loading -> {
+                            binding.moviesListLoading.visibility = View.VISIBLE
+                        }
+                        is Resource.Error -> {
+                            binding.moviesListLoading.visibility = View.GONE
+                            // Show error message
+                            Toast.makeText(
+                                this@MoviesListActivity,
+                                resource.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
-                is Resource.Loading -> {
-                    // Show loading indicator
-                }
-                is Resource.Error -> {
-                    // Show error message
-                    Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
-                }
             }
-        })
+        }
     }
 
     private fun initRecyclerView(movies: List<Movie>) {
@@ -67,34 +78,14 @@ class MoviesListActivity : AppCompatActivity() {
             viewModel.favorites.value?.let {
                 MoviesListAdapter(movies, it, { movieId, isCurrentlyFavorite ->
                     viewModel.toggleFavorite(movieId, isCurrentlyFavorite)
-                }, { movieId, imageView, isFavorite ->
+                }, { movieId, isFavorite ->
                     // Handle item click
-
-
-                    val intent = Intent(this, SingleMovieActivity::class.java).apply {
-                        putExtra("id", movieId)
-                        putExtra("isFavorite", isFavorite)
-                    }
-
-                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                        this,
-                        imageView,
-                        Constants.transition_name
-                    )
-                    startActivity(intent, options.toBundle())
+                    navigateToMovieDetails(movieId, isFavorite)
                 })
 
             }
     }
-
-    private fun getData() {
-        lifecycleScope.launch {
-            viewModel.fetchFavorites()
-            viewModel.fetchPopularMovies()
-        }
-    }
-
-    private fun initViews() {
+    private fun initEditText() {
         binding.searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
@@ -107,4 +98,23 @@ class MoviesListActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {}
         })
     }
+    private fun navigateToMovieDetails(movieId:Int,isFavorite:Boolean){
+        val intent = Intent(this, SingleMovieActivity::class.java).apply {
+            putExtra(Constants.ID, movieId)
+            putExtra(Constants.IS_FAVORITE, isFavorite)
+        }
+        startActivity(intent)
+        overridePendingTransition(
+            R.anim.slide_from_right,
+            R.anim.stay_put
+        )
+    }
+    private fun getData() {
+        lifecycleScope.launch {
+            viewModel.getFavorites()
+            viewModel.getPopularMovies()
+        }
+    }
+
+
 }

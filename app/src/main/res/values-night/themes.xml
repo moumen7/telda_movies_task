@@ -1,4 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Custom TextInputLayout Style -->
+
+
     <!-- Base application theme. -->
     <style name="Theme.TeldaMoviesTask" parent="Theme.Material3.Dark.NoActionBar">
         <!-- Primary brand color. -->
@@ -13,14 +16,32 @@
         <item name="android:statusBarColor">@color/black</item>
         <!-- Customize your theme here. -->
     </style>
+
     <style name="CustomOutlineBoxStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxCornerRadiusTopStart">20dp</item>
         <item name="boxCornerRadiusTopEnd">20dp</item>
         <item name="boxCornerRadiusBottomStart">20dp</item>
         <item name="boxCornerRadiusBottomEnd">20dp</item>
-        <item name="boxStrokeColor">@color/outline_color</item> <!-- Adjust your outline color here -->
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <!-- Reduce vertical spacing -->
+        <item name="hintTextAppearance">@style/CustomHintTextAppearance</item>
+        <item name="boxStrokeColor">@color/outline_color
+        </item> <!-- Adjust your outline color here -->
         <item name="hintTextColor">@color/dark_grey</item> <!-- Adjust your hint text color here -->
         <!-- Optional: Define a color for the focused state if needed -->
-        <item name="colorPrimary">@color/dark_grey</item> <!-- This line removes focus color change by setting it to outline color -->
+        <item name="colorPrimary">@color/dark_grey
+        </item> <!-- This line removes focus color change by setting it to outline color -->
+    </style>
+    <style name="CustomHintTextAppearance" parent="TextAppearance.Design.Hint">
+        <item name="android:textSize">14sp</item> <!-- Smaller hint text -->
+    </style>
+
+    <!-- Custom TextInputEditText Style -->
+    <style name="CustomTextInputEditTextStyle" parent="Widget.MaterialComponents.TextInputEditText.OutlinedBox">
+        <item name="android:textSize">14sp</item> <!-- Smaller text size -->
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <!-- Adjust padding to make the EditText field smaller -->
     </style>
 </resources>

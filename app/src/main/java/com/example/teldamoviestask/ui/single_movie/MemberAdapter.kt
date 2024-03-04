@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.teldamoviestask.R
 import com.example.teldamoviestask.data.constants.Constants
-import com.example.teldamoviestask.databinding.ActorItemBinding
+import com.example.teldamoviestask.databinding.MemberItemBinding
 
 class MemberAdapter(
     private val similarMovies: List<String?>
@@ -15,8 +15,8 @@ class MemberAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MovieViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        val binding = DataBindingUtil.inflate<ActorItemBinding>(
-            inflater, R.layout.actor_item, parent, false
+        val binding = DataBindingUtil.inflate<MemberItemBinding>(
+            inflater, R.layout.member_item, parent, false
         )
         return MovieViewHolder(binding)
     }
@@ -32,16 +32,16 @@ class MemberAdapter(
 
 
 
-    class MovieViewHolder(private val binding: ActorItemBinding) :
+    class MovieViewHolder(private val binding: MemberItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
             imageUrl: String
         ) {
-
+            val fullImageUrl = Constants.BASE_IMAGE_URL + imageUrl
             // Use Glide to load the movie image from URL
             Glide.with(binding.movieImage.context)
-                .load(Constants.BASE_IMAGE_URL + imageUrl)
+                .load(fullImageUrl)
                 .into(binding.movieImage)
 
             binding.executePendingBindings()

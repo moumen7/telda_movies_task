@@ -38,111 +38,60 @@ class SingleMovieActivity : AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_single_movie)
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            window.statusBarColor = Color.TRANSPARENT
-        }
-        binding.back.setOnClickListener {
-            onBackPressed()
-        }
-        lifecycleScope.launch {
-            viewModel.setIsFavorite(intent.getBooleanExtra(Constants.IS_FAVORITE, false))
-            viewModel.fetchMovieDetails(intent.getIntExtra(Constants.ID, 0))
-            viewModel.fetchSimilarMovies(intent.getIntExtra(Constants.ID, 0))
-        }
-        binding.addToFavorites.setOnClickListener {
-            viewModel.toggleFavorite(intent.getIntExtra(Constants.ID, 0))
-        }
-        lifecycleScope.launch {
-            viewModel.isFavorite.collectLatest {
-                binding.addToFavorites.setImageResource(if (it) R.drawable.heart_on else R.drawable.heart_off)
-            }
-        }
-        binding.movieOverview.viewTreeObserver.addOnGlobalLayoutListener(object :
-            ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                if (binding.movieOverview.lineCount > 5) {
-                    val end =
-                        binding.movieOverview.layout.getLineEnd(4) // Get the end position of the 5th line
-                    val moreString = " Read More"
-                    val displayText =
-                        binding.movieOverview.text.subSequence(0, end) as String + moreString
-                    binding.movieOverview.text = displayText
+        takeFullScreen()
+        initViews()
+        startFlow()
+        setObservers()
+    }
 
-                    val spannableString = SpannableString(binding.movieOverview.text)
-                    val clickableSpan: ClickableSpan = object : ClickableSpan() {
-                        override fun onClick(widget: View) {
-                            // Expand the TextView to show all lines
-                            binding.movieOverview.maxLines = Integer.MAX_VALUE
-                            binding.movieOverview.text = viewModel.movie.value?.data?.overview
-                        }
-                    }
+    private fun setObservers() {
+        observeIsFavorite()
+        observeSimilarMovies()
+        observeActors()
+        observeDirectors()
+        observeMovieDetails()
+    }
 
-                    spannableString.setSpan(
-                        clickableSpan,
-                        displayText.length - moreString.length,
-                        displayText.length,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                    binding.movieOverview.text = spannableString
-                    binding.movieOverview.movementMethod = LinkMovementMethod.getInstance()
+    private fun observeMovieDetails() {
+        viewModel.movie.observe(this, Observer { resource ->
+            when (resource) {
+                is Resource.Success -> {
 
-                    // Remove the listener to prevent multiple triggers
-                    binding.movieOverview.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    Glide.with(binding.movieImage.context)
+                        .load(Constants.BASE_IMAGE_URL + resource.data?.backdrop_path)
+                        .into(binding.movieImage)
+                }
+                is Resource.Loading -> {
+                }
+                is Resource.Error -> {
+                    // Show error message
+                    Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
                 }
             }
         })
+    }
 
-        binding.similarMovies.layoutManager =
-            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        binding.actors.layoutManager =
-            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        binding.directors.layoutManager =
-            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.actors.collectLatest { actors ->
-                    binding.actors.adapter = actors.data?.map { it.profile_path }
-                        ?.let { MemberAdapter(it) }
-                }
-            }
-        }
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.directors.collectLatest { directors ->
-                    binding.directors.adapter = directors.data?.map { it.profile_path }
-                        ?.let { MemberAdapter(it) }
-                }
-            }
-        }
-
+    private fun observeSimilarMovies() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.similarMovies.collectLatest { similarMovies ->
                     when (similarMovies) {
                         is Resource.Success -> {
+                            binding.similarMoviesLoading.visibility = View.GONE
                             // Update UI with the data
                             similarMovies.data?.let { movies ->
                                 binding.similarMovies.adapter =
-                                    SimilarMoviesAdapter(movies.results) { movieId ->
+                                    SimilarMoviesAdapter(movies) { movieId ->
                                         // Handle item click
-                                        val intent =
-                                            Intent(
-                                                this@SingleMovieActivity,
-                                                SingleMovieActivity::class.java
-                                            ).apply {
-                                                putExtra("id", movieId)
-                                            }
-                                        startActivity(intent)
+                                        navigateToMovieDetails(movieId)
                                     }
                             }
                         }
                         is Resource.Loading -> {
-                            // Show loading indicator
+                            binding.similarMoviesLoading.visibility = View.VISIBLE
                         }
                         is Resource.Error -> {
+                            binding.similarMoviesLoading.visibility = View.GONE
                             // Show error message
                             Toast.makeText(
                                 this@SingleMovieActivity,
@@ -154,23 +103,115 @@ class SingleMovieActivity : AppCompatActivity() {
                 }
             }
         }
+    }
 
-
-        viewModel.movie.observe(this, Observer { resource ->
-            when (resource) {
-                is Resource.Success -> {
-                    Glide.with(binding.movieImage.context)
-                        .load(Constants.BASE_IMAGE_URL + resource.data?.backdrop_path)
-                        .into(binding.movieImage)
-                }
-                is Resource.Loading -> {
-                    Toast.makeText(this, "loading", Toast.LENGTH_SHORT).show()
-                }
-                is Resource.Error -> {
-                    // Show error message
-                    Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
-                }
+    private fun navigateToMovieDetails(movieId: Int) {
+        val intent =
+            Intent(
+                this@SingleMovieActivity,
+                SingleMovieActivity::class.java
+            ).apply {
+                putExtra(Constants.ID, movieId)
             }
-        })
+        startActivity(intent)
+    }
+
+    private fun observeDirectors() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.directors.collectLatest { directors ->
+                    when (directors) {
+                        is Resource.Success -> {
+                            binding.directors.adapter = directors.data?.map { it.profile_path }
+                                ?.let { MemberAdapter(it) }
+                        }
+                        is Resource.Loading -> {
+                        }
+                        is Resource.Error -> {
+                            // Show error message
+                            Toast.makeText(
+                                this@SingleMovieActivity,
+                                directors.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    private fun observeActors() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.actors.collectLatest { actors ->
+                    when (actors) {
+                        is Resource.Success -> {
+                            binding.actorsLoading.visibility = View.GONE
+                            binding.actors.adapter = actors.data?.map { it.profile_path }
+                                ?.let { MemberAdapter(it) }
+                        }
+                        is Resource.Loading -> {
+                            binding.actorsLoading.visibility = View.VISIBLE
+                        }
+                        is Resource.Error -> {
+                            binding.actorsLoading.visibility = View.GONE
+                            // Show error message
+                            Toast.makeText(
+                                this@SingleMovieActivity,
+                                actors.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    private fun observeIsFavorite() {
+        lifecycleScope.launch {
+            viewModel.isFavorite.collectLatest {isFavorite ->
+                binding.addToFavorites.setImageResource(if (isFavorite) R.drawable.heart_on else R.drawable.heart_off)
+            }
+        }
+    }
+
+    private fun startFlow() {
+        lifecycleScope.launch {
+            viewModel.setIsFavorite(intent.getBooleanExtra(Constants.IS_FAVORITE, false))
+            viewModel.getMovieDetails(intent.getIntExtra(Constants.ID, 0))
+            viewModel.getSimilarMovies(intent.getIntExtra(Constants.ID, 0))
+        }
+    }
+
+    private fun initViews() {
+        binding.similarMovies.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.actors.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.directors.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.back.setOnClickListener {
+            onBackPressed()
+        }
+        binding.addToFavorites.setOnClickListener {
+            viewModel.toggleFavorite(intent.getIntExtra(Constants.ID, 0))
+        }
+    }
+
+    private fun takeFullScreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            window.statusBarColor = Color.TRANSPARENT
+        }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        overridePendingTransition(R.anim.stay_put, R.anim.slide_out_right)
     }
 }

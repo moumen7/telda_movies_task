@@ -45,9 +45,10 @@ class SimilarMoviesAdapter(
             }
 
             binding.movie = movie
+            val fullImageUrl = Constants.BASE_IMAGE_URL + movie.poster_path
             // Use Glide to load the movie image from URL
             Glide.with(binding.movieImage.context)
-                .load(Constants.BASE_IMAGE_URL + movie.poster_path)
+                .load(fullImageUrl)
                 .into(binding.movieImage)
 
             binding.executePendingBindings()
