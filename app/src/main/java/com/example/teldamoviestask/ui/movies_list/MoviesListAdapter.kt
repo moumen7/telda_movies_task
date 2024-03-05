@@ -6,6 +6,7 @@ import android.widget.ImageView
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.teldamoviestask.R
 import com.example.teldamoviestask.data.constants.Constants
 import com.example.teldamoviestask.databinding.MovieItemBinding
@@ -61,6 +62,8 @@ class MoviesListAdapter(
             // Use Glide to load the movie image from URL
             Glide.with(binding.movieImage.context)
                 .load(completeImageUrl)
+                .override(500, 350)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .into(binding.movieImage)
 
             binding.executePendingBindings()
