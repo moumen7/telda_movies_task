@@ -11,8 +11,8 @@ Telda Movies is a challenge made for Telda. It shows list of popular movies, mov
 ### Screenshots of the app.
 
 <p align="middle">
- <img src="https://github.com/moumen7/telda_movies_task/assets/57041674/c80c7567-077a-4da9-a0ad-807d14a74d63" width="290" height="640">
   <img src="https://github.com/moumen7/telda_movies_task/assets/57041674/64491694-5c6e-4300-8e40-b76fcddecf03" width="290" height="640">
+  <img src="https://github.com/moumen7/telda_movies_task/assets/57041674/c80c7567-077a-4da9-a0ad-807d14a74d63" width="290" height="640">
 </p>
 
 
